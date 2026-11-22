@@ -16,60 +16,109 @@ Download a version of the tabula-java's jar, with all dependencies included, tha
 ```
 $ java -jar target/tabula-1.0.5-jar-with-dependencies.jar --help
 usage: tabula [-a <AREA>] [-b <DIRECTORY>] [-c <COLUMNS>] [-f <FORMAT>]
-       [-g] [-h] [-i] [-l] [-n] [-o <OUTFILE>] [-p <PAGES>] [-r] [-s
-       <PASSWORD>] [-t] [-u] [-v]
+       [-g] [--grid] [--grid-tolerance <TOLERANCE>] [-h] [-i] [-l] [-n]
+       [-o <OUTFILE>] [-p <PAGES>] [-r] [-s <PASSWORD>] [-t] [-u] [-v]
 
 Tabula helps you extract tables from PDFs
 
- -a,--area <AREA>           -a/--area = Portion of the page to analyze.
-                            Example: --area 269.875,12.75,790.5,561.
-                            Accepts top,left,bottom,right i.e. y1,x1,y2,x2
-                            where all values are in points relative to the
-                            top left corner. If all values are between
-                            0-100 (inclusive) and preceded by '%', input
-                            will be taken as % of actual height or width
-                            of the page. Example: --area %0,0,100,50. To
-                            specify multiple areas, -a option should be
-                            repeated. Default is entire page
- -b,--batch <DIRECTORY>     Convert all .pdfs in the provided directory.
- -c,--columns <COLUMNS>     X coordinates of column boundaries. Example
-                            --columns 10.1,20.2,30.3. If all values are
-                            between 0-100 (inclusive) and preceded by '%',
-                            input will be taken as % of actual width of
-                            the page. Example: --columns %25,50,80.6
- -f,--format <FORMAT>       Output format: (CSV,TSV,JSON). Default: CSV
- -g,--guess                 Guess the portion of the page to analyze per
-                            page.
- -h,--help                  Print this help text.
- -i,--silent                Suppress all stderr output.
- -l,--lattice               Force PDF to be extracted using lattice-mode
-                            extraction (if there are ruling lines
-                            separating each cell, as in a PDF of an Excel
-                            spreadsheet)
- -n,--no-spreadsheet        [Deprecated in favor of -t/--stream] Force PDF
-                            not to be extracted using spreadsheet-style
-                            extraction (if there are no ruling lines
-                            separating each cell)
- -o,--outfile <OUTFILE>     Write output to <file> instead of STDOUT.
-                            Default: -
- -p,--pages <PAGES>         Comma separated list of ranges, or all.
-                            Examples: --pages 1-3,5-7, --pages 3 or
-                            --pages all. Default is --pages 1
- -r,--spreadsheet           [Deprecated in favor of -l/--lattice] Force
-                            PDF to be extracted using spreadsheet-style
-                            extraction (if there are ruling lines
-                            separating each cell, as in a PDF of an Excel
-                            spreadsheet)
- -s,--password <PASSWORD>   Password to decrypt document. Default is empty
- -t,--stream                Force PDF to be extracted using stream-mode
-                            extraction (if there are no ruling lines
-                            separating each cell)
- -u,--use-line-returns      Use embedded line returns in cells. (Only in
-                            spreadsheet mode.)
- -v,--version               Print version and exit.
+ -a,--area <AREA>                  -a/--area = Portion of the page to
+                                   analyze. Example: --area
+                                   269.875,12.75,790.5,561. Accepts
+                                   top,left,bottom,right i.e. y1,x1,y2,x2
+                                   where all values are in points relative
+                                   to the top left corner. If all values
+                                   are between 0-100 (inclusive) and
+                                   preceded by '%', input will be taken as
+                                   % of actual height or width of the
+                                   page. Example: --area %0,0,100,50. To
+                                   specify multiple areas, -a option
+                                   should be repeated. Default is entire
+                                   page
+ -b,--batch <DIRECTORY>            Convert all .pdfs in the provided
+                                   directory.
+ -c,--columns <COLUMNS>            X coordinates of column boundaries.
+                                   Example --columns 10.1,20.2,30.3. If
+                                   all values are between 0-100
+                                   (inclusive) and preceded by '%', input
+                                   will be taken as % of actual width of
+                                   the page. Example: --columns
+                                   %25,50,80.6
+ -f,--format <FORMAT>              Output format: (CSV,TSV,JSON). Default:
+                                   CSV
+ -g,--guess                        Guess the portion of the page to
+                                   analyze per page.
+    --grid                         Add an optional grid reconstructed from
+                                   the bordered cells, with
+                                   rowSpan/colSpan, to the JSON output.
+                                   Only applies to lattice-mode extraction
+                                   and to the JSON format.
+    --grid-tolerance <TOLERANCE>   Maximum spread, in points, of a group
+                                   of merged grid edges. Default: 0.1.
+ -h,--help                         Print this help text.
+ -i,--silent                       Suppress all stderr output.
+ -l,--lattice                      Force PDF to be extracted using
+                                   lattice-mode extraction (if there are
+                                   ruling lines separating each cell, as
+                                   in a PDF of an Excel spreadsheet)
+ -n,--no-spreadsheet               [Deprecated in favor of -t/--stream]
+                                   Force PDF not to be extracted using
+                                   spreadsheet-style extraction (if there
+                                   are no ruling lines separating each
+                                   cell)
+ -o,--outfile <OUTFILE>            Write output to <file> instead of
+                                   STDOUT. Default: -
+ -p,--pages <PAGES>                Comma separated list of ranges, or all.
+                                   Examples: --pages 1-3,5-7, --pages 3 or
+                                   --pages all. Default is --pages 1
+ -r,--spreadsheet                  [Deprecated in favor of -l/--lattice]
+                                   Force PDF to be extracted using
+                                   spreadsheet-style extraction (if there
+                                   are ruling lines separating each cell,
+                                   as in a PDF of an Excel spreadsheet)
+ -s,--password <PASSWORD>          Password to decrypt document. Default
+                                   is empty
+ -t,--stream                       Force PDF to be extracted using
+                                   stream-mode extraction (if there are no
+                                   ruling lines separating each cell)
+ -u,--use-line-returns             Use embedded line returns in cells.
+                                   (Only in spreadsheet mode.)
+ -v,--version                      Print version and exit.
 ```
 
 It also includes a debugging tool, run `java -cp ./target/tabula-1.0.5-jar-with-dependencies.jar technology.tabula.debug.Debug -h` for the available options.
+
+### Optional grid in the lattice JSON output
+
+Tables extracted in lattice mode (`-l`) are built from bordered cells. With `--grid`, the JSON
+output of each table gets an extra `grid` property reconstructed from those cells, which keeps
+multi-column headers, multi-row account names and genuinely empty fields apart. Everything else
+in the JSON (and every other output format) is unchanged; without `--grid` the output is exactly
+the same as before.
+
+```
+$ java -jar tabula.jar -l -f JSON --grid statement.pdf
+```
+
+`--grid-tolerance <TOLERANCE>` (default `0.1` points) is the maximum spread of a group of merged
+edge coordinates: all left/right (and top/bottom) coordinates within that spread of the group's
+smallest coordinate become one grid line, and the spread of every group never exceeds it. The
+result does not depend on the order in which the bordered cells were supplied.
+
+Inside `grid`:
+
+ - `row_count`, `col_count`, `tolerance`, `cells` and `errors`.
+ - `cells` is an array of rows; every position has a `kind` and its `row`/`col`.
+   - `real`: an actual bordered box, emitted at the grid position of its top-left corner, with
+     its `text` and `rowSpan`/`colSpan` (a bordered box with no text is still `real`).
+   - `covered`: covered by a real box; `reference` points at that box's top-left grid cell.
+   - `uncovered`: not covered by any real box.
+ - `errors` lists mapping problems with the `page_number` and `table_index` (plus the 1-based
+   `table_number` and a message). `zero_span` is reported when a box maps to a zero span;
+   `overlap` when two real boxes end up on the same grid positions (e.g. an enclosing box also
+   detected as its own cell). The table's own `data` is never modified.
+
+From Java, use `new JSONWriter(true, tolerance)` (or `new JSONWriter(true)`) instead of
+`new JSONWriter()`, and `Table.getGrid(tolerance, tableIndex)` to obtain a `TableGrid`.
 
 You can also integrate `tabula-java` with any JVM language. For Java examples, see the [`tests`](src/test/java/technology/tabula/) folder.
 

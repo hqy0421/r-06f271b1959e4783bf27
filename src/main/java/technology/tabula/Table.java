@@ -74,6 +74,34 @@ public class Table extends Rectangle {
 		return cell != null ? cell : TextChunk.EMPTY;
 	}
 
+	/**
+	 * Reconstructs the optional grid from the bordered cells this table was built from.
+	 *
+	 * <p>Only tables extracted from ruling lines have bordered cells; for every other table
+	 * this returns {@code null}, so the default JSON output is unaffected.</p>
+	 *
+	 * @param tolerance  maximum spread, in PDF points, of a merged group of edge coordinates
+	 * @param tableIndex zero-based index of this table, used when reporting mapping errors
+	 */
+	public TableGrid getGrid(float tolerance, int tableIndex) {
+		return null;
+	}
+
+	/** Reconstructs the optional grid with the default tolerance. */
+	public TableGrid getGrid() {
+		return getGrid(TableGrid.DEFAULT_TOLERANCE, 0);
+	}
+
+	/** Reconstructs the optional grid with the given tolerance. */
+	public TableGrid getGrid(float tolerance) {
+		return getGrid(tolerance, 0);
+	}
+
+	/** Whether this table has bordered cells and can produce a grid. */
+	public boolean hasGrid() {
+		return false;
+	}
+
 }
 
 class CellPosition implements Comparable<CellPosition> {

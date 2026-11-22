@@ -13,14 +13,55 @@ public class TableWithRulingLines extends Table {
 
     List<Ruling> verticalRulings, horizontalRulings;
     RectangleSpatialIndex<Cell> si = new RectangleSpatialIndex<>();
-    
+    private List<Cell> cells;
+
     public TableWithRulingLines(Rectangle area, List<Cell> cells, List<Ruling> horizontalRulings, List<Ruling> verticalRulings, ExtractionAlgorithm extractionAlgorithm, int pageNumber) {
         super(extractionAlgorithm);
         this.setRect(area);
         this.verticalRulings = verticalRulings;
         this.horizontalRulings = horizontalRulings;
+        this.cells = copyOfCells(cells);
         this.addCells(cells);
         this.setPageNumber(pageNumber);
+    }
+
+    private static List<Cell> copyOfCells(List<Cell> cells) {
+        List<Cell> copy = new ArrayList<>();
+        if (cells != null) {
+            for (Cell cell : cells) {
+                if (cell != null) {
+                    copy.add(cell);
+                }
+            }
+        }
+        return Collections.unmodifiableList(copy);
+    }
+
+    /**
+     * The bordered cells this table was built from, in the order they were detected.
+     * These are the "real boxes" used to reconstruct the optional grid.
+     */
+    public List<Cell> getCells() {
+        return this.cells;
+    }
+
+    @Override
+    public boolean hasGrid() {
+        return !this.cells.isEmpty();
+    }
+
+    /**
+     * Reconstructs the optional grid from this table's bordered cells.
+     *
+     * @param tolerance maximum spread, in PDF points, of a merged group of edge coordinates
+     * @param tableIndex zero-based index of this table, used when reporting mapping errors
+     */
+    @Override
+    public TableGrid getGrid(float tolerance, int tableIndex) {
+        if (this.cells.isEmpty()) {
+            return null;
+        }
+        return TableGrid.build(this.cells, tolerance, this.getPageNumber(), tableIndex);
     }
     
     private void addCells(List<Cell> cells) {

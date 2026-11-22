@@ -45,6 +45,8 @@ public class CommandLineApp {
     private OutputFormat outputFormat;
     private String password;
     private TableExtractor tableExtractor;
+    private boolean includeGrid;
+    private float gridTolerance;
 
     public CommandLineApp(Appendable defaultOutput, CommandLine line) throws ParseException {
         this.defaultOutput = defaultOutput;
@@ -52,6 +54,8 @@ public class CommandLineApp {
         this.pages = CommandLineApp.whichPages(line);
         this.outputFormat = CommandLineApp.whichOutputFormat(line);
         this.tableExtractor = CommandLineApp.createExtractor(line);
+        this.includeGrid = line.hasOption("grid");
+        this.gridTolerance = CommandLineApp.whichGridTolerance(line);
 
         if (line.hasOption('s')) {
             this.password = line.getOptionValue('s');
@@ -253,6 +257,23 @@ public class CommandLineApp {
         return Utils.parsePagesOption(pagesOption);
     }
 
+    private static float whichGridTolerance(CommandLine line) throws ParseException {
+        if (!line.hasOption("grid-tolerance")) {
+            return TableGrid.DEFAULT_TOLERANCE;
+        }
+        String value = line.getOptionValue("grid-tolerance");
+        try {
+            float tolerance = Float.parseFloat(value);
+            if (Float.isNaN(tolerance) || Float.isInfinite(tolerance) || tolerance < 0) {
+                throw new NumberFormatException("must be finite and non-negative");
+            }
+            return tolerance;
+        } catch (NumberFormatException e) {
+            throw new ParseException(String.format(
+                    "grid tolerance %s is illegal. It must be a non-negative number of points", value));
+        }
+    }
+
     private static ExtractionMethod whichExtractionMethod(CommandLine line) {
         // -r/--spreadsheet [deprecated; use -l] or -l/--lattice
         if (line.hasOption('r') || line.hasOption('l')) {
@@ -364,6 +385,17 @@ public class CommandLineApp {
                 .hasArg()
                 .argName("PAGES")
                 .build());
+        o.addOption(Option.builder()
+                .longOpt("grid")
+                .desc("Add an optional grid reconstructed from the bordered cells, with rowSpan/colSpan, to the JSON output. "
+                        + "Only applies to lattice-mode extraction and to the JSON format.")
+                .build());
+        o.addOption(Option.builder()
+                .longOpt("grid-tolerance")
+                .desc("Maximum spread, in points, of a group of merged grid edges. Default: " + TableGrid.DEFAULT_TOLERANCE + ".")
+                .hasArg()
+                .argName("TOLERANCE")
+                .build());
 
         return o;
     }
@@ -466,7 +498,7 @@ public class CommandLineApp {
                 writer = new CSVWriter();
                 break;
             case JSON:
-                writer = new JSONWriter();
+                writer = this.includeGrid ? new JSONWriter(true, this.gridTolerance) : new JSONWriter();
                 break;
             case TSV:
                 writer = new TSVWriter();
